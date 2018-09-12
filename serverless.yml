@@ -1,0 +1,40 @@
+service: tsu
+
+provider:
+  name: aws
+  runtime: python3.6
+  # stage: ${opt:stage, 'dev'}
+  # region: us-west-2
+  # timeout: 30
+  # deploymentBucket:
+  #   name: ${self:service}-${self:provider.stage}-serverless-deployment
+  #
+  # environment:
+  #   REGION: ${self:provider.region}
+  #   STAGE: ${self:provider.stage}
+
+# custom:
+#   perEnvConf: ${file(./serverless-config-env.yml):${self:provider.stage}, file(./serverless-config-env.yml):dev}
+#
+#   customDomain:
+#     domainName: ${self:custom.perEnvConf.domainName}
+#     enabled: ${self:custom.perEnvConf.domainEnabled}
+#     createRoute53Record: false
+
+package:
+  individually: true
+
+functions:
+  api_posts:
+    handler: src/api/posts.handler
+    name: tsu-api-posts
+    events:
+      - http: GET /api/posts
+
+# resources:
+#   Resources:
+#
+#     AthenaBucket:
+#       Type: AWS::S3::Bucket
+#       Properties:
+#         BucketName: ${self:provider.environment.ATHENA_S3_BUCKET_NAME}
