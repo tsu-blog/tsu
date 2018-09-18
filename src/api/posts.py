@@ -18,7 +18,7 @@ def handler(event, context):
             {
                 "id": 1,
                 "title": "Post about another thing",
-                "body": "Hello World",
+                "body": "你好世界",
                 "created_at": datetime.datetime.now().isoformat(),
                 "updated_at": datetime.datetime.now().isoformat(),
                 "created_by": "Robert"
