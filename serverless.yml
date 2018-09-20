@@ -30,6 +30,11 @@ functions:
     name: tsu-api-posts
     events:
       - http: GET /api/posts
+  api_get_env_var:
+    handler: src/api/env_var.handler
+    name: tsu-env-var
+    events:
+      - http: GET /api/env_var
 
 # resources:
 #   Resources:
