@@ -1,4 +1,4 @@
-def lambda_handler(event, context):
+def handler(event, context):
     # TODO implement
     env_var_dict = {
         'time': os.environ['TZ'],
