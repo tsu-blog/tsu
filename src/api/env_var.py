@@ -12,16 +12,16 @@ def handler(event, context):
         'default_region': os.environ['AWS_DEFAULT_REGION'],
         'log_group': os.environ['AWS_LAMBDA_LOG_GROUP_NAME'],
         'log_stream': os.environ['AWS_LAMBDA_LOG_STREAM_NAME'],
-        'function_name': os.environ['AWS_LAMBDA_FUNCTION_NAME'],        
+        'function_name': os.environ['AWS_LAMBDA_FUNCTION_NAME'],
         'function_memory_size': os.environ['AWS_LAMBDA_FUNCTION_MEMORY_SIZE'],
         'function_version': os.environ['AWS_LAMBDA_FUNCTION_VERSION'],
         'path': os.environ['PATH'],
         'ld_library_path': os.environ['LD_LIBRARY_PATH'],
-        'node_path': os.environ['NODE_PATH'],
-        'python_path': os.environ['PYTHONPATH'],        
+        #'node_path': os.environ['NODE_PATH'],
+        'python_path': os.environ['PYTHONPATH'],
         'lang': os.environ['LANG']
     }
-    
+
     return {
         "statusCode": 200,
         "body": json.dumps(env_var_dict)
