@@ -1,4 +1,5 @@
-### Tsu ![alt text](https://s3.amazonaws.com/tsu-emshea/snowflake-clipart-1.jpg "Tsu Snowflake Logo")
+### Tsu
+![alt text](https://s3.amazonaws.com/tsu-emshea/snowflake-clipart-1.jpg "Tsu Snowflake Logo")
 
 # Introduction
 Tsu is cloud native, open source blogging software designed with extensibility and back-end developer experience in mind.
