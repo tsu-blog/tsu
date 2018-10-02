@@ -1,7 +1,5 @@
-### Tsu :snowflake:
-
 # Introduction
-Tsu is cloud native, open source blogging software designed with extensibility and back-end developer experience in mind.
+Tsu :snowflake: is cloud native, open source blogging software designed with extensibility and back-end developer experience in mind.
 
 ## Tenets
 - Put learning first.
