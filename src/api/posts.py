@@ -1,29 +1,21 @@
 import datetime
 import json
+import boto3
+from botocore.vendored import requests
+
+lambda_client = boto3.client('lambda')
 
 def handler(event, context):
-    # Someday....
-    # posts = coreService.getPosts()
+    invoke_response = lambda_client.invoke(
+        FunctionName="tsu-core-post-listing",
+        InvocationType='RequestResponse',
+    )
+    response_string = invoke_response['Payload'].read()
+    response = json.loads(response_string)
+    print(response)
 
     body = {
-        "posts": [
-            {
-                "id": 2,
-                "title": "Post about something",
-                "body": "This is my body content",
-                "created_at": datetime.datetime.now().isoformat(),
-                "updated_at": datetime.datetime.now().isoformat(),
-                "created_by": "Emily"
-            },
-            {
-                "id": 1,
-                "title": "Post about another thing",
-                "body": "你好世界",
-                "created_at": datetime.datetime.now().isoformat(),
-                "updated_at": datetime.datetime.now().isoformat(),
-                "created_by": "Robert"
-            }
-        ]
+        "posts": response
     }
 
     return {

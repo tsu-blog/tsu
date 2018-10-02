@@ -3,6 +3,11 @@ service: tsu
 provider:
   name: aws
   runtime: python3.6
+  iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - lambda:InvokeFunction
+        Resource: "*"
   # stage: ${opt:stage, 'dev'}
   # region: us-west-2
   # timeout: 30
@@ -25,6 +30,9 @@ package:
   individually: true
 
 functions:
+  core_posts_listing:
+    handler: src/core/posts/listing.handler
+    name: tsu-core-post-listing
   api_posts:
     handler: src/api/posts.handler
     name: tsu-api-posts
