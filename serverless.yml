@@ -32,7 +32,7 @@ package:
 functions:
   core_posts_listing:
     handler: src/core/posts/listing.handler
-    name: tsu-core-post-listing
+    name: tsu-core-posts-listing
   api_posts:
     handler: src/api/posts.handler
     name: tsu-api-posts

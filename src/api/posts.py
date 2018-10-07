@@ -1,21 +1,10 @@
-import datetime
 import json
-import boto3
-from botocore.vendored import requests
-
-lambda_client = boto3.client('lambda')
+from src.util import service_mesh
 
 def handler(event, context):
-    invoke_response = lambda_client.invoke(
-        FunctionName="tsu-core-post-listing",
-        InvocationType='RequestResponse',
-    )
-    response_string = invoke_response['Payload'].read()
-    response = json.loads(response_string)
-    print(response)
 
     body = {
-        "posts": response
+        "posts": service_mesh.call('core-posts-listing')
     }
 
     return {
