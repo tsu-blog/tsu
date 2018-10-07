@@ -1,5 +1,6 @@
 import subprocess
 import os
+import shutil
 
 class TsuCommand(object):
     id = 'default'
@@ -16,9 +17,10 @@ class TsuCommand(object):
     def run(self, args):
         raise NotImplementedError()
 
-    def execute(self, *args, **kwargs):
+    def execute(self, command):
         """Execute the provided command using the subprocess module"""
-        return subprocess.run(*args, **kwargs)
+        command[0] = shutil.which(command[0]) # Lookup the command using PATH (windows doesn't do this by default)
+        return subprocess.run(command)
 
     def path(self, path):
         """Returns an absolute path given a path that is relative to the Tsu root directory"""
