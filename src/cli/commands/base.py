@@ -1,6 +1,7 @@
 import subprocess
 import os
 import shutil
+import platform
 
 class TsuCommand(object):
     id = 'default'
@@ -17,10 +18,13 @@ class TsuCommand(object):
     def run(self, args):
         raise NotImplementedError()
 
-    def execute(self, command):
+    def execute(self, command, capture_output=False):
         """Execute the provided command using the subprocess module"""
         command[0] = shutil.which(command[0]) # Lookup the command using PATH (windows doesn't do this by default)
-        return subprocess.run(command)
+        if capture_output:
+            return subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            return subprocess.run(command)
 
     def path(self, path):
         """Returns an absolute path given a path that is relative to the Tsu root directory"""
@@ -33,3 +37,9 @@ class TsuCommand(object):
                 path # Then add the requested apth
             )
         )
+
+    def clear_screen(self):
+        if platform.system() == 'Windows':
+            self.execute(['cls'])
+        else:
+            self.execute(['clear'])

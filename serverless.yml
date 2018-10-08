@@ -8,46 +8,35 @@ provider:
         Action:
           - lambda:InvokeFunction
         Resource: "*"
-  # stage: ${opt:stage, 'dev'}
-  # region: us-west-2
-  # timeout: 30
-  # deploymentBucket:
-  #   name: ${self:service}-${self:provider.stage}-serverless-deployment
-  #
-  # environment:
-  #   REGION: ${self:provider.region}
-  #   STAGE: ${self:provider.stage}
-
-# custom:
-#   perEnvConf: ${file(./serverless-config-env.yml):${self:provider.stage}, file(./serverless-config-env.yml):dev}
-#
-#   customDomain:
-#     domainName: ${self:custom.perEnvConf.domainName}
-#     enabled: ${self:custom.perEnvConf.domainEnabled}
-#     createRoute53Record: false
 
 package:
   individually: true
+  exclude:
+    - ".*/**"
 
 functions:
   core_posts_listing:
     handler: src/core/posts/listing.handler
     name: tsu-core-posts-listing
+    package:
+      include:
+        - src/core/posts/**
+
   api_posts:
     handler: src/api/posts.handler
     name: tsu-api-posts
     events:
       - http: GET /api/posts
+    package:
+      include:
+        - src/api/**
+        - src/util/**
+
   api_get_env_var:
     handler: src/api/env_var.handler
     name: tsu-env-var
     events:
       - http: GET /api/env_var
-
-# resources:
-#   Resources:
-#
-#     AthenaBucket:
-#       Type: AWS::S3::Bucket
-#       Properties:
-#         BucketName: ${self:provider.environment.ATHENA_S3_BUCKET_NAME}
+    package:
+      include:
+        - src/api/**
