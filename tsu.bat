@@ -1,6 +1,6 @@
-
-IF NOT EXIST venv\bin\python.exe (
-  venv\bin\python.exe src\cli\tsu.py init
+@echo off
+IF NOT EXIST %~dp0\venv\Scripts\python.exe (
+  %~dp0\venv\Scripts\python.exe %~dp0\src\cli\tsu.py init
 )
 
-venv\bin\python.exe %*
+%~dp0\venv\Scripts\python.exe %~dp0\src\cli\tsu.py %*
