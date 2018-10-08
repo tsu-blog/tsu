@@ -16,6 +16,9 @@ def handler(event, context):
 
         contents = post['Body'].read()
         contents_dict = json.loads(contents)
+        # This modifies the 'updated_at' key in the post to the 'last_modified' date of the s3 file.
+        contents_dict['updated_at'] = post_summary.last_modified.isoformat()
+
         contents_dict_list.append(contents_dict)
-        
+
     return contents_dict_list
