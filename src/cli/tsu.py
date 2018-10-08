@@ -1,9 +1,7 @@
-#! ./tools/setup_python.sh
-
 import argparse
 import sys
 import json
-from src.cli import init, config, deploy, watch, publish
+from commands import init, config, deploy, watch, publish
 
 commands = [
     init.InitCmd,

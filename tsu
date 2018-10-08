@@ -2,7 +2,7 @@
 
 # Initialize our venv if it wasn't already setup
 if [ ! -f venv/bin/python ]; then
-  python3 "$1" init
+  python3 src/cli/tsu.py init
 fi
 
-venv/bin/python "$@"
+venv/bin/python src/cli/tsu.py "$@"

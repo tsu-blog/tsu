@@ -1,4 +1,4 @@
-from src.cli.base import TsuCommand
+from commands.base import TsuCommand
 
 class ConfigCmd(TsuCommand):
     id = 'config'

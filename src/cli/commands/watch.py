@@ -4,8 +4,8 @@ import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from src.cli.base import TsuCommand
-from src.cli.deploy import DeployCmd
+from commands.base import TsuCommand
+from commands.deploy import DeployCmd
 
 class WatchCmd(TsuCommand):
     id = 'watch'

@@ -27,7 +27,8 @@ class TsuCommand(object):
         return os.path.normpath( # Resolve the ../../ into a direct absolute path
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), # The dir of our current file (eg /something/arbitrary/src/cli)
-                '..', # up 2 levels
+                '..', # up 3 levels
+                '..',
                 '..',
                 path # Then add the requested apth
             )
