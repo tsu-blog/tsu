@@ -2,6 +2,7 @@ import datetime
 import json
 import boto3
 import time
+import os
 from botocore.vendored import requests
 
 lambda_client = boto3.client('lambda')
@@ -9,7 +10,7 @@ lambda_client = boto3.client('lambda')
 def call(service_name):
     start = time.time()
     invoke_response = lambda_client.invoke(
-        FunctionName="tsu-" + service_name,
+        FunctionName= os.environ['TSU_PREFIX'] + service_name,
         InvocationType='RequestResponse',
     )
     response_string = invoke_response['Payload'].read()

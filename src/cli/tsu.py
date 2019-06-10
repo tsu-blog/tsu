@@ -12,7 +12,7 @@ commands = [
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tool for managing your Tsu installation')
-    parser.add_argument('-s', '--stage', choices=['prod','staging','dev'], help='Stage to run against', default='prod')
+    parser.add_argument('-s', '--stage', choices=['prod','staging','dev'], help='Stage to run against', default='dev')
     subparsers = parser.add_subparsers(
         title="Commands",
         description="The following commands are available",
