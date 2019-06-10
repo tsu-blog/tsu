@@ -1,42 +1,87 @@
 service: tsu
 
+custom:
+  tsuStage: ${opt:stage, self:provider.stage}
+  pythonRequirements:
+    dockerizePip: non-linux
+
 provider:
   name: aws
   runtime: python3.6
+  stage: dev
   iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - lambda:InvokeFunction
-        Resource: "*"
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: "arn:aws:lambda:*:*:function:tsu-${self:custom.tsuStage}-*"
 
 package:
   individually: true
   exclude:
     - ".*/**"
 
-functions:
-  core_posts_listing:
-    handler: src/core/posts/listing.handler
-    name: tsu-core-posts-listing
-    package:
-      include:
-        - src/core/posts/**
+plugins:
+  - serverless-python-requirements
 
+functions:
   api_posts:
     handler: src/api/posts.handler
-    name: tsu-api-posts
+    name: tsu-${self:custom.tsuStage}-api-posts
     events:
       - http: GET /api/posts
     package:
       include:
         - src/api/**
+        - src/core/**
         - src/util/**
 
   api_get_env_var:
     handler: src/api/env_var.handler
-    name: tsu-env-var
+    name: tsu-${self:custom.tsuStage}-env-var
     events:
       - http: GET /api/env_var
     package:
       include:
         - src/api/**
+
+  ui_base_posts:
+    handler: src/ui/base/posts.handler
+    name: tsu-${self:custom.tsuStage}-ui-base-posts
+    events:
+      - http: GET /posts
+    package:
+      include:
+        - src/ui/**
+        - src/util/**
+        - requirements.txt
+
+resources:
+  Resources:
+    CloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Enabled: true
+          Comment: Tsu Caching Layer
+          DefaultCacheBehavior:
+            TargetOriginId: tsu-${self:custom.tsuStage}-ui
+            ViewerProtocolPolicy: 'redirect-to-https'
+            DefaultTTL: 30
+            ForwardedValues:
+              QueryString: true
+              QueryStringCacheKeys:
+                - limit
+                - page
+          Origins:
+            - Id: tsu-${self:custom.tsuStage}-ui
+              DomainName:
+                Fn::Join:
+                  - "."
+                  -
+                    - Ref: ApiGatewayRestApi
+                    - execute-api.us-east-1.amazonaws.com
+              OriginPath: /${self:custom.tsuStage}
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: https-only
