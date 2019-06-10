@@ -1,10 +1,9 @@
 import argparse
 import sys
 import json
-from commands import init, config, deploy, watch, publish
+from commands import config, deploy, watch, publish
 
 commands = [
-    init.InitCmd,
     config.ConfigCmd,
     deploy.DeployCmd,
     watch.WatchCmd,
