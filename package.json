@@ -1,0 +1,26 @@
+{
+  "name": "tsu",
+  "version": "1.0.0",
+  "description": "Tsu :snowflake: is cloud native, open source blogging software designed with extensibility and back-end developer experience in mind.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rsyvarth/tsu.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rsyvarth/tsu/issues"
+  },
+  "homepage": "https://github.com/rsyvarth/tsu#readme",
+  "dependencies": {
+    "serverless-python-requirements": "^4.2.5"
+  }
+}

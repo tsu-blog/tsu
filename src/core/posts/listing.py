@@ -4,7 +4,7 @@ import boto3
 client = boto3.client('s3')
 
 # Handler loops through files in the s3 posts bucket. It collects Bucket Name and Key data in order to read the post body. It then converts the post body to JSON and appends the JSON dictionary to a running list of post contents.
-def handler(event, context):
+def list_posts():
     s3 = boto3.resource('s3')
     bucket = s3.Bucket('tsu-posts')
 
