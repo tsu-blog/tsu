@@ -1,0 +1,367 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Constructs a managed IAM policy to deploy a serverless project.
+
+  This template assumes the stack is being deployed in the current region and account.
+  You can then attach this policy to other IAM objects, such as users or roles.
+
+  Based on the work done in: https://github.com/serverless/serverless/issues/1439
+
+Parameters:
+
+  UserName:
+    Description: >-
+      The name of the IAM User to construct.
+    Type: String
+    # From https://docs.aws.amazon.com/IAM/latest/APIReference/API_UpdateUser.html
+    AllowedPattern: '[A-Za-z0-9+=,.@-]+'  #'
+
+  Service:
+    Description: >-
+      A name for this serverless service.
+    Type: String
+
+  LambdaPrefix:
+    Description: >-
+      A prefix for lambdas in this service.
+    Type: String
+
+  Stage:
+    Description: >-
+      The stage for this project.
+    Type: String
+
+  MayInvoke:
+    Description: >-
+      Allow the constructed user to invoke lambdas.
+    Type: String
+    AllowedValues: [allow, deny]
+    Default: allow
+
+  MayDeployFunction:
+    Description: >-
+      Allow the user to deploy a single function. This is ignored if you don't create a CfnRole.
+    Type: String
+    AllowedValues: [allow, deny]
+    Default: allow
+
+  CreateCfnRole:
+    Description: >-
+      Create a role to assign to the `provider.cfnRole` variable, rather than rely on the user's permissions.
+    Type: String
+    AllowedValues: [create, skip]
+    Default: skip
+
+Conditions:
+  AllowInvoke: !Equals [!Ref MayInvoke, allow]
+  UserFullPermissions: !Or [!Equals [!Ref MayDeployFunction, allow], !Equals [!Ref CreateCfnRole, ignore]]
+  CreateCfnRole: !Equals [!Ref CreateCfnRole, create]
+
+Resources:
+
+  DeployUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref UserName
+      Policies: []  # Prefer managing policies separately.
+
+  CfnRole:
+    Condition: CreateCfnRole
+    Type: AWS::IAM::Role
+    Properties:
+      Policies: []
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub 'cloudformation.${AWS::URLSuffix}'
+            Action:
+              - sts:AssumeRole
+
+  DeployPolicy:
+    # Cumulative inline policy size cannot exceed 2,048 characters for IAM Users.
+    # Cloudformation will hang waiting for an update exceeding this amount to complete.
+    # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Users:
+        - !Ref DeployUser
+      ManagedPolicyName: !Sub '${Service}-${Stage}-DeployPolicy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ListDeploymentBucket
+            Effect: Allow
+            Action:
+              - s3:GetBucketLocation
+              - s3:ListBucket
+              - s3:CreateBucket
+              - s3:DeleteBucket
+            Resource:
+              # See https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-arn-format.html
+              # Also https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/using-govcloud-arns.html
+              - !Sub 'arn:${AWS::Partition}:s3:::${Service}-${Stage}-serverless-deploymen*'
+          - Sid: ReadWriteAccessToDeploymentObjects
+            Effect: Allow
+            Action:
+              - s3:GetObject*
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${Service}-${Stage}-serverless-deploymen*/*'
+          - Sid: ValidateTemplate
+            Effect: Allow
+            Action:
+              - cloudformation:ValidateTemplate
+            Resource: '*'
+          - Sid: ReadAccessToCloudFormation
+            Effect: Allow
+            Action:
+              - cloudformation:Describe*
+              - cloudformation:List*
+              - cloudformation:Get*
+              - cloudformation:PreviewStackUpdate
+            Resource:
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html
+              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${Service}-${Stage}/*'
+          - Sid: WriteAccessToCloudFormation
+            Effect: Allow
+            Action:
+              - cloudformation:CreateStack
+              - cloudformation:UpdateStack
+              - cloudformation:DeleteStack
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${Service}-${Stage}/*'
+          - Sid: GetLambdaRole
+            Effect: Allow
+            Action:
+              - iam:GetRole
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${Service}-${Stage}-${AWS::Region}-lambdaRole'
+          - Sid: ReadSecurityGroups
+            Effect: Allow
+            Action:
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeSubnets
+              - ec2:DescribeVpcs
+            Resource:
+              - "*"
+
+  DeployViaRole:
+    Condition: CreateCfnRole
+    Type: AWS::IAM::Policy
+    Properties:
+      Users:
+        - !Ref DeployUser
+      PolicyName: !Sub '${Service}-${Stage}-DeployViaRole'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PassRoleToCloudFormation
+            Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource:
+              - !GetAtt CfnRole.Arn
+
+  UpdateServicePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Users:
+        - !If [UserFullPermissions, !Ref DeployUser, !Ref 'AWS::NoValue']
+      Roles:
+        - !If [CreateCfnRole, !Ref CfnRole, !Ref 'AWS::NoValue']
+      ManagedPolicyName: !Sub '${Service}-${Stage}-UpdateServicePolicy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DropDeploymentBucket
+            Effect: Allow
+            Action:
+              - s3:DeleteBucket
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${Service}-${Stage}-serverless-deploymen*'
+          - Sid: ReadAccessToDeploymentObjects
+            Effect: Allow
+            Action:
+              - s3:GetObject*
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${Service}-${Stage}-serverless-deploymen*/*'
+          - Sid: Lambdas
+            Effect: Allow
+            Action:
+              - lambda:Get*
+              - lambda:List*
+              - lambda:CreateFunction
+              - lambda:DeleteFunction
+              - lambda:UpdateFunctionCode
+              - lambda:UpdateFunctionConfiguration
+              - lambda:PublishVersion
+              - lambda:CreateAlias
+              - lambda:DeleteAlias
+              - lambda:UpdateAlias
+              - lambda:AddPermission
+              - lambda:RemovePermission
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaPrefix}-${Stage}*'
+          - Sid: CloudwatchEvents
+            Effect: Allow
+            Action:
+              - events:Put*
+              - events:Remove*
+              - events:Delete*
+              - events:Describe*
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${LambdaPrefix}-${Stage}*'
+          - Sid: CloudwatchLogs
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:DeleteLogGroup
+              - logs:DeleteLogStream
+              - logs:DescribeLogStreams
+              - logs:FilterLogEvents
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaPrefix}-${Stage}*:log-stream:*'
+          - Sid: CloudwatchLogGroups
+            Effect: Allow
+            Action:
+              - logs:DescribeLogGroups
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group::log-stream:*'
+          - Sid: IamRole
+            Effect: Allow
+            Action:
+              - iam:GetRole
+              - iam:PassRole
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:DetachRolePolicy
+              - iam:PutRolePolicy
+              - iam:AttachRolePolicy
+              - iam:DeleteRolePolicy
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${Service}-${Stage}-${AWS::Region}-lambdaRole'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${LambdaPrefix}-${Stage}-*'
+
+  ApiGwPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Users:
+        - !If [UserFullPermissions, !Ref DeployUser, !Ref 'AWS::NoValue']
+      Roles:
+        - !If [CreateCfnRole, !Ref CfnRole, !Ref 'AWS::NoValue']
+      PolicyName: !Sub '${Service}-${Stage}-ApiGwPolicy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ApiGwEvents
+            Effect: Allow
+            Action:
+              - apigateway:GET
+              - apigateway:POST
+              - apigateway:PUT
+              - apigateway:DELETE
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis'
+              - !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis/*'
+
+  S3BucketPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Users:
+        - !If [UserFullPermissions, !Ref DeployUser, !Ref 'AWS::NoValue']
+      Roles:
+        - !If [CreateCfnRole, !Ref CfnRole, !Ref 'AWS::NoValue']
+      PolicyName: !Sub '${Service}-${Stage}-S3BucketPolicy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CreateDataBucket
+            Effect: Allow
+            Action:
+              - s3:CreateBucket
+              - s3:DeleteBucket
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:s3:::${Service}-${AWS::Region}-${Stage}*'
+
+  CloudwatchTriggerPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Users:
+        - !If [UserFullPermissions, !Ref DeployUser, !Ref 'AWS::NoValue']
+      Roles:
+        - !If [CreateCfnRole, !Ref CfnRole, !Ref 'AWS::NoValue']
+      PolicyName: !Sub '${Service}-${Stage}-CloudwatchTriggerPolicy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ManageCloudwatchTriggers
+            Effect: Allow
+            Action:
+              - events:*
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${LambdaPrefix}-${Stage}*'
+
+  InvokeLambdaPolicy:
+    Condition: AllowInvoke
+    Type: AWS::IAM::Policy
+    Properties:
+      Users:
+        - !Ref DeployUser
+      PolicyName: !Sub '${Service}-${Stage}-InvokeLambdaPolicy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: InvokeFunction
+            Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaPrefix}-${Stage}*'
+
+  DomainManagerDeployPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Users:
+        - !If [UserFullPermissions, !Ref DeployUser, !Ref 'AWS::NoValue']
+      Roles:
+        - !If [CreateCfnRole, !Ref CfnRole, !Ref 'AWS::NoValue']
+      PolicyName: !Sub '${Service}-${Stage}-DomainManagerPolicy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - apigateway:POST
+            Resource: !Sub arn:aws:apigateway:${AWS::Region}::/domainnames
+          - Effect: Allow
+            Action:
+              - apigateway:GET
+              - apigateway:DELETE
+            Resource: !Sub arn:aws:apigateway:${AWS::Region}::/domainnames/*
+          - Effect: Allow
+            Action:
+              - apigateway:POST
+            Resource: !Sub arn:aws:apigateway:${AWS::Region}::/domainnames/*/basepathmappings
+          - Effect: Allow
+            Action:
+              - cloudfront:UpdateDistribution
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - route53:ListHostedZones
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - acm:ListCertificates
+            Resource: '*'
+
+Outputs:
+  cfnRole:
+    Description: 'The `provider.cfnRole` value to use, or empty string if no role was created.'
+    Value: !If [CreateCfnRole, !GetAtt CfnRole.Arn, '']
