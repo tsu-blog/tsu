@@ -9,7 +9,11 @@ class DeployCmd(TsuCommand):
 
     def run(self, args):
         print("Deploying Tsu...")
+        additional_args = []
         if args.function:
-            self.execute(['sls', 'deploy', 'function', '-f', args.function])
-        else:
-            self.execute(['sls', 'deploy'])
+            additional_args.extend(['function', '-f', args.function])
+
+        if args.stage:
+            additional_args.extend(['--stage', args.stage])
+
+        self.execute(['sls', 'deploy', *additional_args])
