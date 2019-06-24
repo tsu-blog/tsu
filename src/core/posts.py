@@ -1,0 +1,31 @@
+import datetime
+import json
+import boto3
+from src.util.config import ConfigValues
+
+client = boto3.client('s3')
+
+def list_posts():
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket(ConfigValues.POSTS_BUCKET)
+
+    contents_dict_list = []
+    for post_summary in bucket.objects.all():
+        post = client.get_object(Bucket=post_summary.bucket_name, Key=post_summary.key)
+
+        contents = post['Body'].read()
+        contents_dict_list.append(_load_post(contents))
+
+    return sorted(contents_dict_list, key=lambda p: p['created_at'], reverse=True)
+
+def get_post(id):
+    s3 = boto3.resource('s3')
+    post = s3.Object(ConfigValues.POSTS_BUCKET, f'{id}.json')
+    contents = post.get()['Body'].read()
+    return _load_post(contents)
+
+def _load_post(post_str):
+    post = json.loads(post_str.decode('utf-8'))
+    post['created_at'] = datetime.datetime.strptime(post['created_at'], "%Y-%m-%d %H:%M:%S")
+
+    return post

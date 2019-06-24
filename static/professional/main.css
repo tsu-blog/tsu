@@ -1,0 +1,39 @@
+a.color,
+.content a,
+.nav-header a,
+.post-wrapper .view-post  {
+  color: #d6686b;
+}
+
+a.color:hover,
+.content a:hover,
+.nav-header a:hover,
+.post-wrapper .view-post:hover {
+  color: #ce4a4f;
+}
+
+nav.menu.columns:not(:last-child) {
+  margin-bottom: -.75rem;
+}
+
+.post-wrapper .level-item {
+  justify-content: left;
+}
+
+.post-wrapper.listing a {
+  color: #4a4a4a;
+}
+
+.post-wrapper.listing a:hover {
+  color: #6a6a6a;
+}
+
+.content .codehilite,
+.content .footnotes {
+  margin-bottom: 1em
+}
+
+
+footer.footer {
+  color: #a7a7a7;
+}

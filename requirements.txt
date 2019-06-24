@@ -1,1 +1,2 @@
 Jinja2==2.10
+python-decouple==3.1

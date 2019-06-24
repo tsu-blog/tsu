@@ -1,11 +1,10 @@
 import json
-from src.util import service_mesh
-from src.core.posts import listing
+from src.core import posts
 
-def handler(event, context):
+def list(event, context):
 
     body = {
-        "posts": listing.list_posts()
+        "posts": posts.list_posts()
     }
 
     return {

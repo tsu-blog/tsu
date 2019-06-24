@@ -21,6 +21,7 @@ class WatchCmd(TsuCommand):
 
         observer = Observer()
         observer.schedule(DeployHandler(args, self), self.path('src'), recursive=True)
+        observer.schedule(StaticSyncHandler(args, self), self.path('static'), recursive=True)
         observer.start()
 
         try:
@@ -70,3 +71,11 @@ class DeployHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         DeployCmd().run(self.args)
         self.watcher_cmd.last_deploy = datetime.datetime.now()
+
+class StaticSyncHandler(FileSystemEventHandler):
+    def __init__(self, args, watcher_cmd):
+        self.args = args
+        self.watcher_cmd = watcher_cmd
+
+    def on_any_event(self, event):
+        DeployCmd().sync_static(self.args)

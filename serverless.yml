@@ -1,72 +1,126 @@
 service: tsu
 
 custom:
-  tsuStage: ${opt:stage, self:provider.stage}
+  stage: ${opt:stage, self:provider.stage}
   pythonRequirements:
     dockerizePip: non-linux
+    useDownloadCache: true
+    useStaticCache: true
+  s3Sync:
+    - bucketName: tsu-${self:custom.stage}-static
+      bucketPrefix: static/
+      localDir: static/${self:custom.config.template}
+      acl: public-read
+  config: ${file(config.yml):${self:custom.stage}, file(config.yml):default}
 
 provider:
   name: aws
   runtime: python3.6
   stage: dev
+  versionFunctions: false
   iamRoleStatements:
     - Effect: Allow
       Action:
         - lambda:InvokeFunction
-      Resource: "arn:aws:lambda:*:*:function:tsu-${self:custom.tsuStage}-*"
+      Resource: "arn:aws:lambda:*:*:function:tsu-${self:custom.stage}-*"
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - Ref: PostsBucket
+    - Effect: "Allow"
+      Action:
+      - "s3:GetObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - Ref: PostsBucket
+            - "/*"
+
   environment:
-    TSU_PREFIX: tsu-${self:custom.tsuStage}-
+    TSU_PREFIX: tsu-${self:custom.stage}-
+    TSU_DEPLOYMENT_ID: ${sls:instanceId}
+    TSU_POSTS_BUCKET: tsu-${self:custom.stage}-posts
+    TSU_TEMPLATE: ${self:custom.config.template}
+    TSU_DOMAIN: ${self:custom.config.domain}
+    TSU_CDN_BASE: ${self:custom.config.cdn_base}
 
 package:
-  individually: true
   exclude:
-    - ".*/**"
+    - "**"
+  include:
+    - src/api/**
+    - src/core/**
+    - src/ui/**
+    - src/util/**
 
 plugins:
   - serverless-python-requirements
+  - serverless-s3-sync
 
 functions:
-  api_posts:
-    handler: src/api/posts.handler
-    name: tsu-${self:custom.tsuStage}-api-posts
+  api_post_list:
+    handler: src/api/posts.list
+    name: tsu-${self:custom.stage}-api-post-list
     events:
       - http: GET /api/posts
-    package:
-      include:
-        - src/api/**
-        - src/core/**
-        - src/util/**
 
-  api_get_env_var:
-    handler: src/api/env_var.handler
-    name: tsu-${self:custom.tsuStage}-env-var
-    events:
-      - http: GET /api/env_var
-    package:
-      include:
-        - src/api/**
+  # api_get_env_var:
+  #   handler: src/api/env_var.handler
+  #   name: tsu-${self:custom.stage}-env-var
+  #   events:
+  #     - http: GET /api/env_var
 
-  ui_base_posts:
-    handler: src/ui/base/posts.handler
-    name: tsu-${self:custom.tsuStage}-ui-base-posts
+  ui_base_home:
+    handler: src/ui/base/home.handler
+    name: tsu-${self:custom.stage}-ui-home
     events:
-      - http: GET /posts
-    package:
-      include:
-        - src/ui/**
-        - src/util/**
-        - requirements.txt
+      - http: GET /
+
+  ui_base_post:
+    handler: src/ui/base/post.handler
+    name: tsu-${self:custom.stage}-ui-post
+    events:
+      - http: GET /post/{id}
+
+  ui_base_about:
+    handler: src/ui/base/about.handler
+    name: tsu-${self:custom.stage}-ui-about
+    events:
+      - http: GET /about
 
 resources:
   Resources:
+    PostsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: tsu-${self:custom.stage}-posts
+
+    TemplateBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: tsu-${self:custom.stage}-static
+        AccessControl: PublicRead
+
     CloudFrontDistribution:
       Type: AWS::CloudFront::Distribution
+      DependsOn:
+        - TemplateBucket
       Properties:
         DistributionConfig:
           Enabled: true
-          Comment: Tsu Caching Layer
+          Comment: Tsu ${self:custom.stage} Lambda
+          Aliases:
+          - ${self:custom.config.domain}
+          ViewerCertificate:
+            AcmCertificateArn: ${self:custom.config.domain_cert}
+            SslSupportMethod: sni-only
           DefaultCacheBehavior:
-            TargetOriginId: tsu-${self:custom.tsuStage}-ui
+            TargetOriginId: tsu-${self:custom.stage}-ui
             ViewerProtocolPolicy: 'redirect-to-https'
             DefaultTTL: 30
             ForwardedValues:
@@ -74,16 +128,36 @@ resources:
               QueryStringCacheKeys:
                 - limit
                 - page
+          CacheBehaviors:
+          - PathPattern: static/*
+            # Comment: Tsu ${self:custom.stage} Static
+            TargetOriginId: tsu-${self:custom.stage}-static
+            AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            ViewerProtocolPolicy: 'redirect-to-https'
+            ForwardedValues:
+              QueryString: true
+              QueryStringCacheKeys:
+                - v
+              Cookies:
+                Forward: none
+
           Origins:
-            - Id: tsu-${self:custom.tsuStage}-ui
+            - Id: tsu-${self:custom.stage}-ui
               DomainName:
                 Fn::Join:
                   - "."
                   -
                     - Ref: ApiGatewayRestApi
                     - execute-api.us-east-1.amazonaws.com
-              OriginPath: /${self:custom.tsuStage}
+              OriginPath: /${self:custom.stage}
               CustomOriginConfig:
                 HTTPPort: 80
                 HTTPSPort: 443
                 OriginProtocolPolicy: https-only
+            - Id: tsu-${self:custom.stage}-static
+              DomainName: !GetAtt TemplateBucket.DomainName
+              S3OriginConfig:
+                OriginAccessIdentity: "" # intentionally empty
