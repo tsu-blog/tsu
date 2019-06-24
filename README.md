@@ -11,4 +11,4 @@ Tsu :snowflake: is cloud native, open source blogging software designed with ext
 ## Features
 - Minimal UI, emphasis on back-end.
 - Production ready and thoroughly documented.
-- Platform and tool agnostic in final state.
+- Platform and tool agnostic in final state..
