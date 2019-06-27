@@ -14,7 +14,11 @@ def list_posts():
         post = client.get_object(Bucket=post_summary.bucket_name, Key=post_summary.key)
 
         contents = post['Body'].read()
-        contents_dict_list.append(_load_post(contents))
+        post = _load_post(contents)
+
+        # Only show posts in the listing if they are published
+        if post.get('status', 'published') == 'published':
+            contents_dict_list.append(post)
 
     return sorted(contents_dict_list, key=lambda p: p['created_at'], reverse=True)
 
