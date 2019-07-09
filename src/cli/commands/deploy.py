@@ -19,7 +19,7 @@ class DeployCmd(TsuCommand):
             additional_args.extend(['--stage', args.stage])
 
         if os.name != 'nt':
-            additional_args.extend(['--reqcache', True])
+            additional_args.extend(['--reqcache', 'true'])
 
         self.execute(['sls', 'deploy', *additional_args])
 

@@ -3,9 +3,9 @@ import datetime
 import json
 import boto3
 from io import BytesIO
+import yaml
 
 from commands.base import TsuCommand
-from util.config import ConfigValues
 
 class PublishCmd(TsuCommand):
     id = 'publish'
@@ -29,5 +29,17 @@ class PublishCmd(TsuCommand):
         # Upload the post to S3
         print("Uploading post to S3...")
         s3 = boto3.resource('s3')
-        bucket = s3.Bucket(ConfigValues.POSTS_BUCKET)
+        bucket = s3.Bucket(self.get_bucket(args.stage))
         bucket.upload_fileobj(BytesIO(json.dumps(data).encode('utf-8')), f"{data['id']}.json")
+
+    def get_bucket(self, stage):
+        with open(self.path("config.yml"), 'r') as fh:
+            data = yaml.safe_load(fh)
+
+        if stage in data:
+            config = data[stage]
+        else:
+            config = data['default']
+            stage = 'dev'
+
+        return f"tsu-{config['domain']}-{stage}-posts"

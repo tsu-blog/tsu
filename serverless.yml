@@ -8,7 +8,7 @@ custom:
     useDownloadCache: ${opt:reqcache, self:custom.false}
     useStaticCache: ${opt:reqcache, self:custom.false}
   s3Sync:
-    - bucketName: tsu-${self:custom.stage}-static
+    - bucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-static
       bucketPrefix: static/
       localDir: static/${self:custom.config.template}
       acl: public-read
@@ -45,7 +45,7 @@ provider:
   environment:
     TSU_PREFIX: tsu-${self:custom.stage}-
     TSU_DEPLOYMENT_ID: ${sls:instanceId}
-    TSU_POSTS_BUCKET: tsu-${self:custom.stage}-posts
+    TSU_POSTS_BUCKET: tsu-${self:custom.config.domain}-${self:custom.stage}-posts
     TSU_TEMPLATE: ${self:custom.config.template}
     TSU_DOMAIN: ${self:custom.config.domain}
     TSU_CDN_BASE: ${self:custom.config.cdn_base}
@@ -99,12 +99,12 @@ resources:
     PostsBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: tsu-${self:custom.stage}-posts
+        BucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-posts
 
     TemplateBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: tsu-${self:custom.stage}-static
+        BucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-static
         AccessControl: PublicRead
 
     CloudFrontDistribution:
