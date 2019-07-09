@@ -16,7 +16,7 @@ class PublishCmd(TsuCommand):
 
     def run(self, args):
         print("Formatting post...")
-        with open(args.path, 'r') as fh:
+        with open(args.path, 'r', encoding='utf-8') as fh:
             contents = fh.read()
 
         html = markdown2.markdown(contents, extras=['metadata','fenced-code-blocks','footnotes','header-ids','tables'])
