@@ -1,4 +1,5 @@
 from commands.base import TsuCommand
+import os
 
 class DeployCmd(TsuCommand):
     id = 'deploy'
@@ -16,6 +17,9 @@ class DeployCmd(TsuCommand):
 
         if args.stage:
             additional_args.extend(['--stage', args.stage])
+
+        if os.name != 'nt':
+            additional_args.extend(['--reqcache', True])
 
         self.execute(['sls', 'deploy', *additional_args])
 

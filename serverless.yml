@@ -2,10 +2,11 @@ service: tsu
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  false: false
   pythonRequirements:
     dockerizePip: non-linux
-    useDownloadCache: true
-    useStaticCache: true
+    useDownloadCache: ${opt:reqcache, self:custom.false}
+    useStaticCache: ${opt:reqcache, self:custom.false}
   s3Sync:
     - bucketName: tsu-${self:custom.stage}-static
       bucketPrefix: static/
