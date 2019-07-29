@@ -74,11 +74,11 @@ class PublishCmd(TsuCommand):
             with Image.open(f) as image:
                 for size in sizes:
                     # If size is None then we are keeping the original resolution
-                    image_sized_path = os.path.join('static','images', image_path)
+                    image_sized_path = os.path.join('static/','images/', image_path)
                     image_sized = image
 
                     if size is not None:
-                        image_sized = resizeimage.resize_width(image, size)
+                        image_sized = resizeimage.resize_width(image, size, validate=False)
                         parts = image_sized_path.split('.')
                         parts[-2] = f'{parts[-2]}-{size}'
                         image_sized_path = '.'.join(parts)
