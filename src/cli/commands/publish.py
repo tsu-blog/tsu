@@ -69,8 +69,8 @@ class PublishCmd(TsuCommand):
     def upload_image_to_s3(self, image_path, relative_dir, cdn_bucket, sizes=[None,320,640,1280]):
         images = []
         image_path = image_path.replace('./', '')
-        
-        with open(os.path.join(relative_dir, image_path), 'r+b') as f:
+
+        with open(os.path.normpath(os.path.join(relative_dir, image_path)), 'r+b') as f:
             with Image.open(f) as image:
                 for size in sizes:
                     # If size is None then we are keeping the original resolution
