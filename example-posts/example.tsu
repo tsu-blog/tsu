@@ -19,7 +19,13 @@ luctus ligula vel **luctus facilisis**. Curabitur a sem justo. Maecenas accumsan
 vel massa consequat vestibulum. Aenean nec urna est. Proin et iaculis elit. Suspendisse
 posuere odio velit, in fermentum lectus aliquet et [^note-id]. Nulla facilisi.
 
-![Image of Yaktocat](https://github.githubassets.com/images/modules/open_graph/github-octocat.png)
+![Alt Text](./example/twitter.png)
+
+Aenean id velit ornare faucibus. Nullam pharetra congue nisi quis dictum. Aenean lacus
+lectus, dignissim vitae magna ut, laoreet fringilla velit. Morbi volutpat feugiat dolor,
+blandit vestibulum diam vehicula vel.
+
+![Alt Text](./example/twitter2.png)(maxwidth=700px)
 
 Aenean id velit ornare faucibus. Nullam pharetra congue nisi quis dictum. Aenean lacus
 lectus, dignissim vitae magna ut, laoreet fringilla velit. Morbi volutpat feugiat dolor,
@@ -61,6 +67,8 @@ Sometimes you want bullet points:
 
 * Start a line with a star
 * Profit!
+
+![Image of Yaktocat](https://github.githubassets.com/images/modules/open_graph/github-octocat.png)
 
 Alternatively,
 
