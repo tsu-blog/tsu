@@ -8,11 +8,19 @@ custom:
     useDownloadCache: ${opt:reqcache, self:custom.false}
     useStaticCache: ${opt:reqcache, self:custom.false}
   s3Sync:
+    # First we copy our base files into S3
     - bucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-static
-      bucketPrefix: static/
+      bucketPrefix: static/base/
       localDir: static/${self:custom.config.template}
       acl: public-read
       deleteRemoved: false
+    # Then we upload any custom files the user provided
+    - bucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-static
+      bucketPrefix: static/custom/
+      localDir: custom/static
+      acl: public-read
+      deleteRemoved: false
+
   config: ${file(config.yml):${self:custom.stage}, file(config.yml):default}
 
 provider:

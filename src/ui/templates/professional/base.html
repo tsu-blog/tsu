@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.9.0/css/all.css" integrity="sha384-i1LQnF23gykqWXg6jxC2ZbCbUMxyw5gLZY6UiUS98LYV5unm8GWmfkIS6jqJfb4E" crossorigin="anonymous">
 
-    <link rel="stylesheet" type="text/css" href="{{cdn_base}}/static/main.css?v={{cache_buster}}">
-    <link rel="stylesheet" type="text/css" href="{{cdn_base}}/static/pygment.css?v={{cache_buster}}">
+    <link rel="stylesheet" type="text/css" href="{{cdn_base}}/static/base/main.css?v={{cache_buster}}">
+    <link rel="stylesheet" type="text/css" href="{{cdn_base}}/static/base/pygment.css?v={{cache_buster}}">
+
+    {% block head %}{% endblock %}
   </head>
   <body>
     <!-- body content -->
