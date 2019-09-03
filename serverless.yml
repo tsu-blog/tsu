@@ -12,6 +12,7 @@ custom:
       bucketPrefix: static/
       localDir: static/${self:custom.config.template}
       acl: public-read
+      deleteRemoved: false
   config: ${file(config.yml):${self:custom.stage}, file(config.yml):default}
 
 provider:
