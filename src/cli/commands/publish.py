@@ -109,6 +109,5 @@ class PublishCmd(TsuCommand):
             config = data[stage]
         else:
             config = data['default']
-            stage = 'dev'
 
-        return f"tsu-{config['domain']}-{stage}"
+        return f"tsu-{config['domain']}-{config['name']}"
