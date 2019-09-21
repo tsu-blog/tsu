@@ -18,13 +18,13 @@ class TsuCommand(object):
     def run(self, args):
         raise NotImplementedError()
 
-    def execute(self, command, capture_output=False):
+    def execute(self, command, capture_output=False, **kwargs):
         """Execute the provided command using the subprocess module"""
         command[0] = shutil.which(command[0]) # Lookup the command using PATH (windows doesn't do this by default)
         if capture_output:
-            return subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
         else:
-            return subprocess.run(command)
+            return subprocess.run(command, **kwargs)
 
     def path(self, path):
         """Returns an absolute path given a path that is relative to the Tsu root directory"""
