@@ -1,13 +1,14 @@
 import argparse
 import sys
 import json
-from commands import config, deploy, watch, publish
+from commands import config, deploy, watch, publish, update
 
 commands = [
     config.ConfigCmd,
     deploy.DeployCmd,
     watch.WatchCmd,
     publish.PublishCmd,
+    update.UpdateCmd,
 ]
 
 if __name__ == "__main__":
