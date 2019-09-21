@@ -1,11 +1,13 @@
 
 prod:
+  name: prod
   template: professional
   domain: my.blog
   domain_cert: arn:aws:acm:region:id:certificate/id
   cdn_base: https://my.blog
 
 default:
+  name: dev
   template: professional
   domain: dev.my.blog
   domain_cert: arn:aws:acm:region:id:certificate/id

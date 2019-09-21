@@ -1,4 +1,4 @@
-service: tsu
+service: tsu-${self:custom.config.name}
 
 custom:
   stage: ${opt:stage, self:provider.stage}
@@ -9,18 +9,17 @@ custom:
     useStaticCache: ${opt:reqcache, self:custom.false}
   s3Sync:
     # First we copy our base files into S3
-    - bucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-static
+    - bucketName: tsu-${self:custom.config.domain}-${self:custom.config.name}-static
       bucketPrefix: static/base/
       localDir: static/${self:custom.config.template}
       acl: public-read
       deleteRemoved: false
     # Then we upload any custom files the user provided
-    - bucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-static
+    - bucketName: tsu-${self:custom.config.domain}-${self:custom.config.name}-static
       bucketPrefix: static/custom/
       localDir: custom/static
       acl: public-read
       deleteRemoved: false
-
   config: ${file(config.yml):${self:custom.stage}, file(config.yml):default}
 
 provider:
@@ -32,7 +31,7 @@ provider:
     - Effect: Allow
       Action:
         - lambda:InvokeFunction
-      Resource: "arn:aws:lambda:*:*:function:tsu-${self:custom.stage}-*"
+      Resource: "arn:aws:lambda:*:*:function:tsu-${self:custom.config.name}-*"
     - Effect: "Allow"
       Action:
         - "s3:ListBucket"
@@ -52,9 +51,9 @@ provider:
             - "/*"
 
   environment:
-    TSU_PREFIX: tsu-${self:custom.stage}-
+    TSU_PREFIX: tsu-${self:custom.config.name}-
     TSU_DEPLOYMENT_ID: ${sls:instanceId}
-    TSU_POSTS_BUCKET: tsu-${self:custom.config.domain}-${self:custom.stage}-posts
+    TSU_POSTS_BUCKET: tsu-${self:custom.config.domain}-${self:custom.config.name}-posts
     TSU_TEMPLATE: ${self:custom.config.template}
     TSU_DOMAIN: ${self:custom.config.domain}
     TSU_CDN_BASE: ${self:custom.config.cdn_base}
@@ -75,31 +74,31 @@ plugins:
 functions:
   api_post_list:
     handler: src/api/posts.list
-    name: tsu-${self:custom.stage}-api-post-list
+    name: tsu-${self:custom.config.name}-api-post-list
     events:
       - http: GET /api/posts
 
   # api_get_env_var:
   #   handler: src/api/env_var.handler
-  #   name: tsu-${self:custom.stage}-env-var
+  #   name: tsu-${self:custom.config.name}-env-var
   #   events:
   #     - http: GET /api/env_var
 
   ui_base_home:
     handler: src/ui/base/home.handler
-    name: tsu-${self:custom.stage}-ui-home
+    name: tsu-${self:custom.config.name}-ui-home
     events:
       - http: GET /
 
   ui_base_post:
     handler: src/ui/base/post.handler
-    name: tsu-${self:custom.stage}-ui-post
+    name: tsu-${self:custom.config.name}-ui-post
     events:
       - http: GET /post/{id}
 
   ui_base_about:
     handler: src/ui/base/about.handler
-    name: tsu-${self:custom.stage}-ui-about
+    name: tsu-${self:custom.config.name}-ui-about
     events:
       - http: GET /about
 
@@ -108,12 +107,12 @@ resources:
     PostsBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-posts
+        BucketName: tsu-${self:custom.config.domain}-${self:custom.config.name}-posts
 
     TemplateBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: tsu-${self:custom.config.domain}-${self:custom.stage}-static
+        BucketName: tsu-${self:custom.config.domain}-${self:custom.config.name}-static
         AccessControl: PublicRead
 
     CloudFrontDistribution:
@@ -123,14 +122,14 @@ resources:
       Properties:
         DistributionConfig:
           Enabled: true
-          Comment: Tsu ${self:custom.stage} Lambda
+          Comment: Tsu ${self:custom.config.name} Lambda
           Aliases:
           - ${self:custom.config.domain}
           ViewerCertificate:
             AcmCertificateArn: ${self:custom.config.domain_cert}
             SslSupportMethod: sni-only
           DefaultCacheBehavior:
-            TargetOriginId: tsu-${self:custom.stage}-ui
+            TargetOriginId: tsu-${self:custom.config.name}-ui
             ViewerProtocolPolicy: 'redirect-to-https'
             DefaultTTL: 30
             ForwardedValues:
@@ -140,8 +139,8 @@ resources:
                 - page
           CacheBehaviors:
           - PathPattern: static/*
-            # Comment: Tsu ${self:custom.stage} Static
-            TargetOriginId: tsu-${self:custom.stage}-static
+            # Comment: Tsu ${self:custom.config.name} Static
+            TargetOriginId: tsu-${self:custom.config.name}-static
             AllowedMethods:
             - GET
             - HEAD
@@ -155,7 +154,7 @@ resources:
                 Forward: none
 
           Origins:
-            - Id: tsu-${self:custom.stage}-ui
+            - Id: tsu-${self:custom.config.name}-ui
               DomainName:
                 Fn::Join:
                   - "."
@@ -167,7 +166,7 @@ resources:
                 HTTPPort: 80
                 HTTPSPort: 443
                 OriginProtocolPolicy: https-only
-            - Id: tsu-${self:custom.stage}-static
+            - Id: tsu-${self:custom.config.name}-static
               DomainName: !GetAtt TemplateBucket.DomainName
               S3OriginConfig:
                 OriginAccessIdentity: "" # intentionally empty
