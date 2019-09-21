@@ -8,4 +8,5 @@ class UpdateCmd(TsuCommand):
     def run(self, args):
         print("Updating Tsu...")
 
-        self.execute(['git', 'merge', 'upstream/master'], cwd=self.path('.'))
+        self.execute(['git', 'fetch', 'upstream', 'master'], cwd=self.path('.'))
+        self.execute(['git', 'merge', 'upstream/master', '--no-edit'], cwd=self.path('.'))
