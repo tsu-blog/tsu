@@ -9,7 +9,7 @@ def render(template, data):
     custom_template_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..',  '..', 'custom', 'templates')
 
     # Pull the path to the configured built-in template
-    templates_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..',  'ui', 'templates')
+    templates_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'templates')
     base_template_dir = os.path.join(templates_dir, ConfigValues.TEMPLATE)
 
     # Load the template

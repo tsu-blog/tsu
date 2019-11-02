@@ -1,5 +1,5 @@
 import json
-from src.core import posts
+from src.services import posts
 
 def list(event, context):
 

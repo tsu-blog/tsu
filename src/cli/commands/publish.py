@@ -33,9 +33,15 @@ class PublishCmd(TsuCommand):
 
         print("Formatting post...")
         html = markdown2.markdown(contents, extras=['metadata','fenced-code-blocks','footnotes','header-ids','tables'])
+
+        # Use post publish time if defined
+        created_at = datetime.datetime.utcnow()
+        if 'published' in html.metadata:
+            created_at = datetime.datetime.strptime(html.metadata['published'], '%Y-%m-%d %H:%M')
+
         data = {
             **html.metadata,
-            'created_at': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'created_at': created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'body': html
         }
 

@@ -63,9 +63,9 @@ package:
     - "**"
   include:
     - custom/templates/**
-    - src/api/**
-    - src/core/**
-    - src/ui/**
+    - src/controllers/**
+    - src/services/**
+    - src/templates/**
     - src/util/**
 
 plugins:
@@ -74,7 +74,7 @@ plugins:
 
 functions:
   api_post_list:
-    handler: src/api/posts.list
+    handler: src/controllers/api/posts.list
     name: tsu-${self:custom.config.name}-api-post-list
     events:
       - http: GET /api/posts
@@ -86,20 +86,20 @@ functions:
   #     - http: GET /api/env_var
 
   ui_base_home:
-    handler: src/ui/base/home.handler
-    name: tsu-${self:custom.config.name}-ui-home
+    handler: src/controllers/home.handler
+    name: tsu-${self:custom.config.name}-home
     events:
       - http: GET /
 
   ui_base_post:
-    handler: src/ui/base/post.handler
-    name: tsu-${self:custom.config.name}-ui-post
+    handler: src/controllers/post.handler
+    name: tsu-${self:custom.config.name}-post
     events:
       - http: GET /post/{id}
 
   ui_base_about:
-    handler: src/ui/base/about.handler
-    name: tsu-${self:custom.config.name}-ui-about
+    handler: src/controllers/about.handler
+    name: tsu-${self:custom.config.name}-about
     events:
       - http: GET /about
 

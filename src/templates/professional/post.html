@@ -1,6 +1,6 @@
-{% extends "base.html" %}
-{% block title %}{{post['title']}} - Tsu{% endblock %}
-{% block head %}
+{% extends "components/base.html" %}
+{% block title %}{{post['title']}}{% endblock %}
+{% block metadata %}
   <meta name="twitter:card" content="summary" />
   <!-- <meta name="twitter:creator" content="@yournamehere" /> -->
   <meta property="og:url" content="{{cdn_base}}/post/{{post['id']}}" />
