@@ -132,6 +132,7 @@ resources:
           DefaultCacheBehavior:
             TargetOriginId: tsu-${self:custom.config.name}-ui
             ViewerProtocolPolicy: 'redirect-to-https'
+            Compress: true
             DefaultTTL: 30
             ForwardedValues:
               QueryString: true
@@ -142,6 +143,7 @@ resources:
           - PathPattern: static/*
             # Comment: Tsu ${self:custom.config.name} Static
             TargetOriginId: tsu-${self:custom.config.name}-static
+            Compress: true
             AllowedMethods:
             - GET
             - HEAD
