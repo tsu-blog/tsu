@@ -1,0 +1,1 @@
+Sitemap: {{cdn_base}}/sitemap.xml

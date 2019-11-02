@@ -73,6 +73,30 @@ plugins:
   - serverless-s3-sync
 
 functions:
+  ########################
+  # Core application
+  ########################
+  home:
+    handler: src/controllers/home.handler
+    name: tsu-${self:custom.config.name}-home
+    events:
+      - http: GET /
+
+  post:
+    handler: src/controllers/post.handler
+    name: tsu-${self:custom.config.name}-post
+    events:
+      - http: GET /post/{id}
+
+  about:
+    handler: src/controllers/about.handler
+    name: tsu-${self:custom.config.name}-about
+    events:
+      - http: GET /about
+
+  ########################
+  # API routes
+  ########################
   api_post_list:
     handler: src/controllers/api/posts.list
     name: tsu-${self:custom.config.name}-api-post-list
@@ -85,23 +109,20 @@ functions:
   #   events:
   #     - http: GET /api/env_var
 
-  ui_base_home:
-    handler: src/controllers/home.handler
-    name: tsu-${self:custom.config.name}-home
+  ########################
+  # SEO related routes
+  ########################
+  seo_robots:
+    handler: src/controllers/seo.robots
+    name: tsu-${self:custom.config.name}-seo-robots
     events:
-      - http: GET /
+      - http: GET /robots.txt
 
-  ui_base_post:
-    handler: src/controllers/post.handler
-    name: tsu-${self:custom.config.name}-post
+  seo_sitemap:
+    handler: src/controllers/seo.sitemap
+    name: tsu-${self:custom.config.name}-seo-sitemap
     events:
-      - http: GET /post/{id}
-
-  ui_base_about:
-    handler: src/controllers/about.handler
-    name: tsu-${self:custom.config.name}-about
-    events:
-      - http: GET /about
+      - http: GET /sitemap.xml
 
 resources:
   Resources:
