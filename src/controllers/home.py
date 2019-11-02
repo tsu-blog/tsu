@@ -1,11 +1,11 @@
 from src.util import templates
-from src.services import posts
+from src.services import post_service
 
 def handler(event, context):
     return {
         'statusCode': 200,
         'body': templates.render('home.html', {
-            'posts': posts.list_posts(),
+            'posts': post_service.list_posts(),
         }),
         'headers': {
             'Content-Type': "text/html"
