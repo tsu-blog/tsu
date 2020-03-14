@@ -57,6 +57,10 @@ provider:
     TSU_TEMPLATE: ${self:custom.config.template}
     TSU_DOMAIN: ${self:custom.config.domain}
     TSU_CDN_BASE: ${self:custom.config.cdn_base}
+    TSU_HOMEPAGE: ${self:custom.config.homepage}
+    TSU_TITLE: ${self:custom.config.title}
+    TSU_DESCRIPTION: ${self:custom.config.description}
+    TSU_AUTHOR: ${self:custom.config.author}
 
 package:
   exclude:
