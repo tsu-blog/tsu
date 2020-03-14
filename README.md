@@ -25,7 +25,7 @@ Tsu :snowflake: is cloud native, open source blogging software designed with ext
 ## Getting Started
 - config.yml setup
   - Make a copy of config.example.yml and rename as config.yml. Set domain names to your desired domain names.
-  - Generate a domain certification in AWS Certificate Manager and set domain_cert to the certificate ARN (ex, {arn:aws:acm:region:id:certificate/id})
+  - Generate a domain certification in AWS Certificate Manager and set domain_cert to the certificate ARN (ex, `{arn:aws:acm:region:id:certificate/id}`)
   - The `default` config is intended for staging. The CLI deploy command will deploy to the staging config unless the `--stage prod` flag is passed.
 - Deploy staging with serverless framework
   - Use tsu deploy CLI command to create the CloudFormation stack using serverless framework
