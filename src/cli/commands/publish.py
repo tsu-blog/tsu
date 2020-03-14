@@ -15,6 +15,7 @@ from commands.base import TsuCommand
 class PublishCmd(TsuCommand):
     id = 'publish'
     description = 'Upload and publish a new post'
+    config = None
 
     def add_arguments(self, parser):
         parser.add_argument('path', help="File path of new post to be uploaded")
@@ -29,7 +30,7 @@ class PublishCmd(TsuCommand):
             contents = fh.read()
 
         print("Uploading images...")
-        contents = self.replace_images(contents, post_dir, cdn_bucket)
+        contents = self.replace_images(contents, post_dir, cdn_bucket, self.get_config(args.stage, 'cdn_base'))
 
         print("Formatting post...")
         html = markdown2.markdown(contents, extras=['metadata','fenced-code-blocks','footnotes','header-ids','tables'])
@@ -50,10 +51,10 @@ class PublishCmd(TsuCommand):
         bucket = s3.Bucket(self.get_posts_bucket(args.stage))
         bucket.upload_fileobj(BytesIO(json.dumps(data).encode('utf-8')), f"{data['id']}.json")
 
-    def replace_images(self, markdown, post_dir, cdn_bucket):
+    def replace_images(self, markdown, post_dir, cdn_bucket, cdn_base_url):
         # Finds all matches for ![{alt}](./{img})({css})
         for alt, image, maxwidth in re.findall('\!\[(.*?)\]\((\.\/.+?)\)(?:\(maxwidth\=(.+?)\))?', markdown):
-            images = self.upload_image_to_s3(image, post_dir, cdn_bucket)
+            images = self.upload_image_to_s3(image, post_dir, cdn_bucket, cdn_base_url)
             img_full = None
             srcset = []
             for image_path, size in images:
@@ -72,7 +73,7 @@ class PublishCmd(TsuCommand):
 
         return markdown
 
-    def upload_image_to_s3(self, image_path, relative_dir, cdn_bucket, sizes=[None,320,640,1280]):
+    def upload_image_to_s3(self, image_path, relative_dir, cdn_bucket, cdn_base_url, sizes=[None,320,640,1280]):
         images = []
         image_path = image_path.replace('./', '')
 
@@ -97,7 +98,7 @@ class PublishCmd(TsuCommand):
                     imgByteArr.seek(0)
 
                     cdn_bucket.upload_fileobj(imgByteArr, image_sized_path, ExtraArgs={'ACL':'public-read', 'ContentType': Image.MIME[image_sized.format]})
-                    images.append((f'/{image_sized_path}', size))
+                    images.append((f'{cdn_base_url}/{image_sized_path}', size))
 
         return images
 
@@ -108,12 +109,16 @@ class PublishCmd(TsuCommand):
         return f"{self.get_bucket_base(stage)}-static"
 
     def get_bucket_base(self, stage):
-        with open(self.path("config.yml"), 'r') as fh:
-            data = yaml.safe_load(fh)
+        return f"tsu-{self.get_config(stage, 'domain')}-{self.get_config(stage, 'name')}"
 
-        if stage in data:
-            config = data[stage]
-        else:
-            config = data['default']
+    def get_config(self, stage, key):
+        if self.config is None:
+            with open(self.path("config.yml"), 'r') as fh:
+                data = yaml.safe_load(fh)
 
-        return f"tsu-{config['domain']}-{config['name']}"
+            if stage in data:
+                self.config = data[stage]
+            else:
+                self.config = data['default']
+
+        return self.config[key]
