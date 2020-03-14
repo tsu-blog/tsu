@@ -2,5 +2,5 @@ watchdog~=0.9
 markdown2~=2.3
 Pygments~=2.4
 boto3~=1.9
-Pillow~=5.2
+Pillow~=6.2
 python-resize-image~=1.1
