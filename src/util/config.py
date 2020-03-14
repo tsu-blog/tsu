@@ -23,3 +23,11 @@ class ConfigValues(object):
     POSTS_BUCKET = config('TSU_POSTS_BUCKET', 'tsu-dev-posts')
 
     PREFIX = config('TSU_PREFIX', 'tsu-dev-')
+
+    HOMEPAGE = config('TSU_HOMEPAGE', 'https://my.blog')
+
+    TITLE = config('TSU_TITLE', 'My Blog')
+
+    DESCRIPTION = config('TSU_DESCRIPTION', 'My blog about my life.')
+
+    AUTHOR = config('TSU_AUTHOR', 'FirstName LastName')

@@ -20,6 +20,10 @@ def render(template, data):
     data.update({
         'cdn_base': ConfigValues.CDN_BASE,
         'cache_buster': ConfigValues.DEPLOYMENT_ID,
+        'homepage': ConfigValues.HOMEPAGE,
+        'title': ConfigValues.TITLE,
+        'description': ConfigValues.DESCRIPTION,
+        'author': ConfigValues.AUTHOR
     })
 
     return template.render(**data)

@@ -124,6 +124,12 @@ functions:
     events:
       - http: GET /sitemap.xml
 
+  ui_base_rss:
+    handler: src/ui/base/rss.handler
+    name: tsu-${self:custom.stage}-ui-rss
+    events:
+      - http: GET /rss.xml
+
 resources:
   Resources:
     PostsBucket:

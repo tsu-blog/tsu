@@ -5,6 +5,10 @@ prod:
   domain: my.blog
   domain_cert: arn:aws:acm:region:id:certificate/id
   cdn_base: https://my.blog
+  homepage: https://my.blog
+  title: My Blog
+  description: My blog about my life.
+  author: FirstName LastName
 
 default:
   name: dev
@@ -12,3 +16,7 @@ default:
   domain: dev.my.blog
   domain_cert: arn:aws:acm:region:id:certificate/id
   cdn_base: https://dev.my.blog
+  homepage: https://dev.my.blog
+  title: My Blog
+  description: My blog about my life.
+  author: FirstName LastName
