@@ -65,7 +65,7 @@ class PublishCmd(TsuCommand):
             srcset = ', '.join(srcset)
 
             maxwidth_val = maxwidth if len(maxwidth) > 0 else '100%'
-            image_tag = f'<p style="text-align: center"><a href="{img_full}"><img src="{img_full}" alt="{alt}" srcset="{srcset}" sizes="(max-width: 480px) 100%, (max-width: 900px) 80vw, {maxwidth_val}"/></a></p>'
+            image_tag = f'<p style="text-align: center"><a href="{img_full}"><img src="{img_full}" alt="{alt}" srcset="{srcset}" style="width: 100%; max-width: {maxwidth_val};"/></a></p>'
             if len(maxwidth) > 0:
                 markdown = markdown.replace(f'![{alt}]({image})(maxwidth={maxwidth})', image_tag)
             else:
