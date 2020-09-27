@@ -2,6 +2,7 @@ import subprocess
 import os
 import shutil
 import platform
+import yaml
 
 class TsuCommand(object):
     id = 'default'
@@ -43,3 +44,15 @@ class TsuCommand(object):
             self.execute(['cls'])
         else:
             self.execute(['clear'])
+
+    def get_config(self, stage, key):
+        if self.config is None:
+            with open(self.path("config.yml"), 'r') as fh:
+                data = yaml.safe_load(fh)
+
+            if stage in data:
+                self.config = data[stage]
+            else:
+                self.config = data['default']
+
+        return self.config[key]

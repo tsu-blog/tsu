@@ -2,8 +2,8 @@ import markdown2
 import datetime
 import json
 import boto3
+import hashlib
 from io import BytesIO
-import yaml
 import re
 import os
 
@@ -26,13 +26,14 @@ class PublishCmd(TsuCommand):
         s3 = boto3.resource('s3')
         cdn_bucket = s3.Bucket(self.get_cdn_bucket(args.stage))
 
+        # Read in the contents of the blog post so we can process it
         with open(args.path, 'r', encoding='utf-8') as fh:
             contents = fh.read()
 
         print("Uploading images...")
         contents = self.replace_images(contents, post_dir, cdn_bucket, self.get_config(args.stage, 'cdn_base'))
 
-        print("Formatting post...")
+        print("Formatting post into HTML...")
         html = markdown2.markdown(contents, extras=['metadata','fenced-code-blocks','footnotes','header-ids','tables'])
 
         # Use post publish time if defined
@@ -52,20 +53,37 @@ class PublishCmd(TsuCommand):
         bucket.upload_fileobj(BytesIO(json.dumps(data).encode('utf-8')), f"{data['id']}.json")
 
     def replace_images(self, markdown, post_dir, cdn_bucket, cdn_base_url):
+        """Find all of the images in this post, upload to s3, and replace the tag
+        with HTML version of the image"""
+
         # Finds all matches for ![{alt}](./{img})({css})
         for alt, image, maxwidth in re.findall('\!\[(.*?)\]\((\.\/.+?)\)(?:\(maxwidth\=(.+?)\))?', markdown):
-            images = self.upload_image_to_s3(image, post_dir, cdn_bucket, cdn_base_url)
-            img_full = None
-            srcset = []
-            for image_path, size in images:
-                if size is None:
-                    img_full = image_path
-                else:
-                    srcset.append(f'{image_path} {size}w')
-            srcset = ', '.join(srcset)
+            images = self.upload_image_to_s3(image, post_dir, cdn_bucket)
 
+            # Pull out the full sized image url + a list of all of the resized versions
+            # for our srcset
+            img_full = None
+            srcset_arr = []
+            for image_path, size in images:
+                image_url = f'{cdn_base_url}/{path}'
+
+                if size is None:
+                    img_full = image_url
+                else:
+                    srcset_arr.append(f'{image_url} {size}w')
+
+            # Generate the HTML for this image
+            srcset = ', '.join(srcset_arr)
             maxwidth_val = maxwidth if len(maxwidth) > 0 else '100%'
-            image_tag = f'<p style="text-align: center"><a href="{img_full}"><img src="{img_full}" alt="{alt}" srcset="{srcset}" style="width: 100%; max-width: {maxwidth_val};"/></a></p>'
+            image_tag = f'''
+                <p style="text-align: center">
+                    <a href="{img_full}">
+                        <img src="{img_full}" alt="{alt}" srcset="{srcset}" style="width: 100%; max-width: {maxwidth_val};"/>
+                    </a>
+                </p>
+            '''
+
+            # Replace the tag with the html for this image
             if len(maxwidth) > 0:
                 markdown = markdown.replace(f'![{alt}]({image})(maxwidth={maxwidth})', image_tag)
             else:
@@ -73,52 +91,82 @@ class PublishCmd(TsuCommand):
 
         return markdown
 
-    def upload_image_to_s3(self, image_path, relative_dir, cdn_bucket, cdn_base_url, sizes=[None,320,640,1280]):
-        images = []
+    def upload_image_to_s3(self, image_path, relative_dir, cdn_bucket, sizes=[None,320,640,1280]):
+        """Uploads the provided image into S3 in multiple sizes if the file doesn't already exist.
+        Returns an array of (path, width) tuples"""
         image_path = image_path.replace('./', '')
 
         with open(os.path.normpath(os.path.join(relative_dir, image_path)), 'r+b') as f:
             with Image.open(f) as image:
-                for size in sizes:
-                    # If size is None then we are keeping the original resolution
-                    image_sized_path = os.path.join('static/','images/', image_path)
-                    image_sized = image
+                image_s3_path = os.path.join('static/', 'images/', image_path)
+                images = [(self.add_suffix_to_filename(image_s3_path, size), size) for size in sizes]
 
+                # If the hash of the image locally matches what is in s3, there
+                # is no need to upload again so return immediately
+                local_hash = self.md5_checksum(self.img_to_bytes(image))
+                s3_hash = self.get_s3_etag(cdn_bucket, image_s3_path)
+                if local_hash == s3_hash:
+                    return images
+
+                for (path, size) in images:
+                    # If size is None then we are keeping the original resolution
+                    image_sized = image
                     if size is not None:
                         image_sized = resizeimage.resize_width(image, size, validate=False)
-                        parts = image_sized_path.split('.')
-                        parts[-2] = f'{parts[-2]}-{size}'
-                        image_sized_path = '.'.join(parts)
-
-                    print(">", image_sized_path)
 
                     # Save the image to a byte array and upload to S3
-                    imgByteArr = BytesIO()
-                    image_sized.save(imgByteArr, image.format)
-                    imgByteArr.seek(0)
-
-                    cdn_bucket.upload_fileobj(imgByteArr, image_sized_path, ExtraArgs={'ACL':'public-read', 'ContentType': Image.MIME[image_sized.format]})
-                    images.append((f'{cdn_base_url}/{image_sized_path}', size))
+                    print("> Uploading", path)
+                    cdn_bucket.upload_fileobj(
+                        self.img_to_bytes(image_sized),
+                        path,
+                        ExtraArgs={'ACL':'public-read', 'ContentType': Image.MIME[image_sized.format]}
+                    )
 
         return images
 
+    def add_suffix_to_filename(self, path, suffix):
+        """Takes in a filename string and appends the suffix before the file extension
+        Eg `files/name.png` -> `files/name-{suffix}.png`
+        """
+        parts = path.split('.')
+
+        if suffix is not None:
+            parts[-2] = f'{parts[-2]}-{suffix}'
+
+        return '.'.join(parts)
+
     def get_posts_bucket(self, stage):
+        """Returns the S3 bucket that posts are stored in"""
         return f"{self.get_bucket_base(stage)}-posts"
 
     def get_cdn_bucket(self, stage):
+        """Returns the S3 bucket that static assets (css, images, etc) are stored in"""
         return f"{self.get_bucket_base(stage)}-static"
 
     def get_bucket_base(self, stage):
         return f"tsu-{self.get_config(stage, 'domain')}-{self.get_config(stage, 'name')}"
 
-    def get_config(self, stage, key):
-        if self.config is None:
-            with open(self.path("config.yml"), 'r') as fh:
-                data = yaml.safe_load(fh)
+    def get_s3_etag(self, bucket, s3_path):
+        """Looks up the ETag value for the given S3 object (the MD5 hash of the file in S3).
+        Returns None if the object is not found"""
+        try:
+            return bucket.Object(s3_path).e_tag[1:-1]
+        except Exception as e:
+            return None
 
-            if stage in data:
-                self.config = data[stage]
-            else:
-                self.config = data['default']
+    def img_to_bytes(self, image):
+        """Converts the PIL Image object provided into a BytesIO object"""
+        img_bytes = BytesIO()
+        image.save(img_bytes, image.format)
+        img_bytes.seek(0)
 
-        return self.config[key]
+        return img_bytes
+
+    def md5_checksum(self, file):
+        """Calculates the MD5 checksum of the provided stream"""
+        m = hashlib.md5()
+
+        for data in iter(lambda: file.read(1024 * 1024), b''):
+            m.update(data)
+
+        return m.hexdigest()

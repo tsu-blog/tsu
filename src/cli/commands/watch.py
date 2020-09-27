@@ -53,7 +53,7 @@ class WatchCmd(TsuCommand):
         if self.last_deploy:
             total_seconds_since_last_deploy = int((datetime.datetime.now() - self.last_deploy).total_seconds())
             min_since_deploy = int(total_seconds_since_last_deploy/60)
-            sec_since_deploy = total_seconds_since_last_deploy % (min_since_deploy*60) if min_since_deploy else total_seconds_since_last_deploy
+            sec_since_deploy = total_seconds_since_last_deploy % (min_since_deploy*60) if min_since_deploy > 0 else total_seconds_since_last_deploy
             time_since_last_deploy = f"{min_since_deploy}m {sec_since_deploy}s"
 
         # Clear the screen so our output is always in the same place
