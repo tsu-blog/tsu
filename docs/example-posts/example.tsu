@@ -3,6 +3,7 @@ id: example
 title: Example Post
 category: Software
 published: 2019-08-01 12:30
+thumbnail: ./example/twitter-preview2.png
 preview: >
   你好世界. Vestibulum viverra sollicitudin sapien, in pretium mi lobortis ut. Proin
   luctus ligula vel luctus facilisis. Curabitur a sem justo. Maecenas accumsan orci
