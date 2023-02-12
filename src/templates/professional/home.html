@@ -1,7 +1,8 @@
 {% extends "components/base.html" %}
 {% block title %}Home{% endblock %}
 {% block content %}
-  {% for post in posts %}
+  <div class="column is-three-quarters is-four-fifths-widescreen">
+    {% for post in posts %}
     <div class="post-wrapper listing">
       <a href="/post/{{post['id']}}">
         <div class="level">
@@ -21,5 +22,6 @@
       </a>
     </div>
     <hr />
-  {% endfor %}
+    {% endfor %}
+  </div>
 {% endblock %}
