@@ -35,9 +35,9 @@ def load_config(args):
     ConfigValues.DESCRIPTION = config['description']
     ConfigValues.AUTHOR = config['author']
     ConfigValues.SUBSCRIBER_TABLE = f"SubscriberContactList-{config['domain']}-{config['name']}"
-    ConfigValues.SUB_CONFIRM_BCC = config['sub_confirm_bcc']
-    ConfigValues.CONTACT_EMAIL = config['contact_email']
-    ConfigValues.CACHE_TTL = config['cache_ttl']
+    ConfigValues.SUB_CONFIRM_BCC = config['sub_confirm_bcc'] if 'sub_confirm_bcc' in config else ConfigValues.SUB_CONFIRM_BCC
+    ConfigValues.CONTACT_EMAIL = config['contact_email'] if 'contact_email' in config else ConfigValues.CONTACT_EMAIL
+    ConfigValues.CACHE_TTL = config['cache_ttl'] if 'cache_ttl' in config else ConfigValues.CACHE_TTL
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tool for managing your Tsu installation')
