@@ -22,8 +22,10 @@ def load_config(args):
 
     if args.stage in data:
         config = data[args.stage]
-    else:
+    elif 'default' in data:
         config = data['default']
+    else:
+        config = data[data.keys()[0]]
 
     ConfigValues.APP_NAME = config['name']
     ConfigValues.CDN_BASE = config['cdn_base']
