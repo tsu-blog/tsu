@@ -24,7 +24,7 @@ custom:
 
 provider:
   name: aws
-  runtime: python3.11
+  runtime: python3.9
   stage: dev
   versionFunctions: false
   memorySize: 256
