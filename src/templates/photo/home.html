@@ -1,0 +1,39 @@
+{% extends "components/base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+  {% for post in posts %}
+    <div class="post-wrapper listing">
+      <a href="/post/{{post['id']}}">
+        <div class="columns is-vcentered">
+          <div class="column is-full is-two-fifths-tablet">
+            <figure class="image is-3by2">
+              <img src="{{post['thumbnail']}}">
+            </figure>
+          </div>
+          <div class="column">
+            <div class="level">
+              <div class="level-left mr-1" style="flex-flow: column; flex-shrink: 1;">
+                <h1 class="title is-4 level-item">
+                  {{post['title']}}
+                </h1>
+              </div>
+              <div class="level-right">
+                <div class="level-item">
+                  <span class="tag">{{post['category']}}</span>
+                  <small class="p-2">{{post['created_at'].strftime("%b %d %Y")}}</small>
+                </div>
+              </div>
+            </div>
+            <div class="content">
+              <p>{{post['preview']}} <span class="view-post">→</span></p>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <hr />
+  {% endfor %}
+
+  {% include "components/subscribe_form.html" ignore missing %}
+
+{% endblock %}

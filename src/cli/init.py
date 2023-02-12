@@ -33,8 +33,10 @@ if __name__ == "__main__":
     # Selecting venv looks a little different in windows
     if os.name == 'nt':
         execute([path('venv/Scripts/pip.exe'), 'install', '-r', path('requirements-dev.txt')])
+        execute([path('venv/Scripts/pip.exe'), 'install', '-r', path('requirements.txt')])
     else:
         execute([path('venv/bin/pip'), 'install', '-r', path('requirements-dev.txt')])
+        execute([path('venv/bin/pip'), 'install', '-r', path('requirements.txt')])
 
     print("- Installing NodeJS requirements")
-    execute(['npm', 'install'], cwd=path('/'))
+    execute(['npm', 'install'], cwd=path('.'))

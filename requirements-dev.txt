@@ -1,7 +1,9 @@
-watchdog~=0.9
-markdown2~=2.3
-Pygments~=2.4
-boto3~=1.9
-Pillow~=6.2
+watchdog~=2.2
+markdown2~=2.4
+Pygments~=2.14
+boto3~=1.26
+Pillow~=9.4
 python-resize-image~=1.1
-pyyaml~=5.3
+pyyaml~=6.0
+gphotospy~=0.2
+markupsafe==2.0.1

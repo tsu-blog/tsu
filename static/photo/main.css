@@ -1,0 +1,58 @@
+a.color,
+.content a,
+.nav-header a,
+.post-wrapper .view-post  {
+  color: #018c81;
+}
+
+a.color:hover,
+.content a:hover,
+.nav-header a:hover,
+.post-wrapper .view-post:hover {
+  color: #014E48;
+}
+
+/* Button coloring */
+.button.is-primary {
+  background-color: #018c81;
+}
+.button.is-primary:hover {
+  background-color: #014E48;
+}
+
+/* Banner coloring */
+.notification.is-success.is-light {
+  background-color: #def6f3;
+  color: #018c81;
+}
+
+/* Hide the reCAPTCHA badge (we have our own notice in place) */
+.grecaptcha-badge {
+    visibility: hidden;
+}
+
+nav.menu.columns:not(:last-child) {
+  margin-bottom: -.75rem;
+}
+
+.post-wrapper .level-item {
+  justify-content: left;
+}
+
+.post-wrapper.listing a {
+  color: #4a4a4a;
+}
+
+.post-wrapper.listing a:hover {
+  color: #6a6a6a;
+}
+
+.content .codehilite,
+.content .footnotes {
+  margin-bottom: 1em
+}
+
+
+footer.footer {
+  color: #a7a7a7;
+}

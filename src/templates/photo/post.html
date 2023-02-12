@@ -1,0 +1,44 @@
+{% extends "components/base.html" %}
+{% block title %}{{post['title']}}{% endblock %}
+{% block metadata %}
+  <meta name="twitter:card" content="summary" />
+  <!-- <meta name="twitter:creator" content="@yournamehere" /> -->
+  <meta property="og:url" content="{{cdn_base}}/post/{{post['id']}}" />
+  <meta property="og:title" content="{{post['title']}}" />
+  <meta property="og:description" content="{{post['preview']}}" />
+  {% if 'thumbnail' in post %}
+    <meta property="og:image" content="{{post['thumbnail']}}" />
+    <meta property="og:image:width" content="1200"/>
+    <meta property="og:image:height" content="628"/>
+  {% endif %}
+{% endblock %}
+{% block content %}
+<!-- <div class="notification is-success is-light">
+  You can now <a href="/subscribe">subscribe</a> to get our new posts sent directly to your email!
+</div> -->
+  <div class="post-wrapper">
+    <div class="level">
+      <div class="level-left mr-1" style="flex-flow: column; flex-shrink: 1;">
+        <h1 class="title is-4 level-item">
+          {{post['title']}}
+        </h1>
+      </div>
+      <div class="level-right">
+        <div class="level-item">
+          <span class="tag">{{post['category']}}</span>
+          <small class="p-2">{{post['created_at'].strftime("%b %d %Y")}}</small>
+        </div>
+      </div>
+      <!-- <small><i>Posted in <a href="category.html">Web Design</a> on <a href="post.html"></a> by <a href="category.html">{{post['created_by']}}</a></i></small> -->
+    </div>
+    <div class="content">
+      {{post['body']}}
+      <p><a href="/">← Back Home</a></p>
+    </div>
+  </div>
+
+  <hr />
+
+  {% include "components/subscribe_form.html" ignore missing %}
+
+{% endblock %}

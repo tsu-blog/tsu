@@ -35,7 +35,7 @@ class TsuCommand(object):
                 '..', # up 3 levels
                 '..',
                 '..',
-                path # Then add the requested apth
+                path # Then add the requested path
             )
         )
 

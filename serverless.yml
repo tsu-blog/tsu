@@ -24,9 +24,10 @@ custom:
 
 provider:
   name: aws
-  runtime: python3.6
+  runtime: python3.11
   stage: dev
-  versionFunctions: falsei
+  versionFunctions: false
+  memorySize: 256
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -49,11 +50,39 @@ provider:
           - - "arn:aws:s3:::"
             - Ref: PostsBucket
             - "/*"
+    - Effect: "Allow"
+      Action:
+      - "s3:PutObject"
+      - "s3:PutObjectAcl"
+      - "s3:GetObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - Ref: TemplateBucket
+            - "/*"
+    - Effect: Allow
+      Action:
+        - ses:SendEmail
+      Resource: "arn:aws:ses:us-east-1:107425829436:identity/*"
+    - Effect: "Allow"
+      Action:
+       - dynamodb:Query
+       - dynamodb:Scan
+       - dynamodb:GetItem
+       - dynamodb:PutItem
+       - dynamodb:UpdateItem
+       - dynamodb:DeleteItem
+      Resource:
+        Fn::GetAtt:
+          - SubscriberContactListDynamoDBTable
+          - Arn
 
   environment:
     TSU_PREFIX: tsu-${self:custom.config.name}-
     TSU_DEPLOYMENT_ID: ${sls:instanceId}
     TSU_POSTS_BUCKET: tsu-${self:custom.config.domain}-${self:custom.config.name}-posts
+    TSU_CDN_BUCKET: tsu-${self:custom.config.domain}-${self:custom.config.name}-static
     TSU_TEMPLATE: ${self:custom.config.template}
     TSU_DOMAIN: ${self:custom.config.domain}
     TSU_CDN_BASE: ${self:custom.config.cdn_base}
@@ -61,6 +90,11 @@ provider:
     TSU_TITLE: ${self:custom.config.title}
     TSU_DESCRIPTION: ${self:custom.config.description}
     TSU_AUTHOR: ${self:custom.config.author}
+    TSU_SUB_TABLE_NAME: !Ref SubscriberContactListDynamoDBTable
+    TSU_CACHE_TTL: ${self:custom.config.cache_ttl}
+    TSU_SUB_CONFIRM_BCC: ${self:custom.config.sub_confirm_bcc}
+    TSU_CONTACT_EMAIL: ${self:custom.config.contact_email}
+    TSU_RECAPTCHA_SECRET: ${self:custom.config.recaptcha_secret}
 
 package:
   exclude:
@@ -83,6 +117,7 @@ functions:
   home:
     handler: src/controllers/home.handler
     name: tsu-${self:custom.config.name}-home
+    memorySize: 512
     events:
       - http: GET /
 
@@ -103,6 +138,43 @@ functions:
     name: tsu-${self:custom.config.name}-rss
     events:
       - http: GET /rss.xml
+
+  image: # Image cache for saving local copies of images from Google Photos
+    handler: src/controllers/image.handler
+    name: tsu-${self:custom.config.name}-image
+    events:
+      - http:
+          method: GET
+          path: image
+          response:
+            contentHandling: CONVERT_TO_BINARY
+
+  ########################
+  # Subscription routes
+  ########################
+  subscribe:
+    handler: src/controllers/subscribe.handler
+    name: tsu-${self:custom.config.name}-subscribe
+    events:
+      - http: GET /subscribe
+
+  do_subscribe:
+    handler: src/controllers/subscribe.add_subscription
+    name: tsu-${self:custom.config.name}-add_subscription
+    events:
+      - http: POST /subscribe
+
+  unsubscribe:
+    handler: src/controllers/unsubscribe.handler
+    name: tsu-${self:custom.config.name}-unsubscribe
+    events:
+      - http: GET /unsubscribe
+
+  do_unsubscribe:
+    handler: src/controllers/unsubscribe.remove_subscription
+    name: tsu-${self:custom.config.name}-remove_subscription
+    events:
+      - http: POST /unsubscribe
 
   ########################
   # API routes
@@ -147,6 +219,22 @@ resources:
         BucketName: tsu-${self:custom.config.domain}-${self:custom.config.name}-static
         AccessControl: PublicRead
 
+    SubscriberContactListDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: SubscriberContactList-${self:custom.config.domain}-${self:custom.config.name}
+        AttributeDefinitions:
+          - AttributeName: SubscriberEmail
+            AttributeType: S
+        KeySchema:
+          - AttributeName: SubscriberEmail
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        ProvisionedThroughput:
+          ReadCapacityUnits: 0
+          WriteCapacityUnits: 0
+
     CloudFrontDistribution:
       Type: AWS::CloudFront::Distribution
       DependsOn:
@@ -165,11 +253,21 @@ resources:
             ViewerProtocolPolicy: 'redirect-to-https'
             Compress: true
             DefaultTTL: 30
+            AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - DELETE
+            - PATCH
             ForwardedValues:
               QueryString: true
               QueryStringCacheKeys:
                 - limit
                 - page
+                - email
+                - l
           CacheBehaviors:
           - PathPattern: static/*
             # Comment: Tsu ${self:custom.config.name} Static

@@ -19,6 +19,11 @@ Made with Tsu:
   - You can override any template / css by adding files into the `/custom` directory
 - Write posts in the `/posts` directory
 
+## Google Photos generate
+-- `./tsu generate '{name of Google Photos album}'`
+<!-- page through images within one hour of generating -->
+<!-- to add a different header image, create a folder and add the downloaded photo to it. Reference the file path (./folder_name/image_name.jpg) -->
+
 ## Dev Commands
 (`tsu.bat` instead of `./tsu` to call CLI tool on Windows)
 - `./tsu deploy` to update server side code after updating templates/code
@@ -27,6 +32,7 @@ Made with Tsu:
 ## Prod Commands
 - `./tsu -s prod deploy` to update server side code after updating templates/code
 - `./tsu -s prod publish posts/vocab-app-launch.tsu` to publish post
+- `./tsu -s prod publish posts/vocab-app-launch.tsu --email` to publish and email to subscribers (there is a confirmation step before sending)
 
 ## Updating Tsu
 You should periodically update your fork of Tsu against the main repo to get the

@@ -11,6 +11,8 @@ from PIL import Image
 from resizeimage import resizeimage
 
 from commands.base import TsuCommand
+from src.services import email_service
+from src.util.config import ConfigValues
 
 class PublishCmd(TsuCommand):
     id = 'publish'
@@ -19,13 +21,14 @@ class PublishCmd(TsuCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('path', help="File path of new post to be uploaded")
+        parser.add_argument('-e', '--email', help="Send out an email to all of our subscribers about this post", action='store_true')
 
     def run(self, args):
         post_dir = os.path.dirname(os.path.realpath(args.path))
 
         s3 = boto3.resource('s3')
-        cdn_bucket = s3.Bucket(self.get_cdn_bucket(args.stage))
-        cdn_base_url = self.get_config(args.stage, 'cdn_base')
+        cdn_bucket = s3.Bucket(ConfigValues.CDN_BUCKET)
+        cdn_base_url = ConfigValues.CDN_BASE
 
         # Read in the contents of the blog post so we can process it
         with open(args.path, 'r', encoding='utf-8') as fh:
@@ -35,11 +38,11 @@ class PublishCmd(TsuCommand):
         contents = self.replace_images(contents, post_dir, cdn_bucket, cdn_base_url)
 
         print("Formatting post into HTML...")
-        html = markdown2.markdown(contents, extras=['metadata','fenced-code-blocks','footnotes','header-ids','tables'])
+        html = markdown2.markdown(contents, extras=['metadata','fenced-code-blocks','footnotes','header-ids','tables','markdown-in-html'])
 
-        if 'thumbnail' in html.metadata:
+        if 'thumbnail' in html.metadata and 'https://' not in html.metadata['thumbnail']:
             print("Uploading thumbnail...")
-            images = self.upload_image_to_s3(html.metadata['thumbnail'], post_dir, cdn_bucket, sizes=[(1200, 628)])
+            images = self.upload_image_to_s3(html.metadata['thumbnail'], post_dir, cdn_bucket, sizes=[(1200, 800)])
             path, size = images[0]
             html.metadata['thumbnail'] = f'{cdn_base_url}/{path}'
 
@@ -58,6 +61,9 @@ class PublishCmd(TsuCommand):
         print("Uploading post to S3...")
         bucket = s3.Bucket(self.get_posts_bucket(args.stage))
         bucket.upload_fileobj(BytesIO(json.dumps(data).encode('utf-8')), f"{data['id']}.json")
+
+        if args.email:
+            self.send_email(data, args)
 
     def replace_images(self, markdown, post_dir, cdn_bucket, cdn_base_url):
         """Find all of the images in this post, upload to s3, and replace the tag
@@ -154,14 +160,11 @@ class PublishCmd(TsuCommand):
 
     def get_posts_bucket(self, stage):
         """Returns the S3 bucket that posts are stored in"""
-        return f"{self.get_bucket_base(stage)}-posts"
+        return ConfigValues.POSTS_BUCKET
 
     def get_cdn_bucket(self, stage):
         """Returns the S3 bucket that static assets (css, images, etc) are stored in"""
-        return f"{self.get_bucket_base(stage)}-static"
-
-    def get_bucket_base(self, stage):
-        return f"tsu-{self.get_config(stage, 'domain')}-{self.get_config(stage, 'name')}"
+        return ConfigValues.CDN_BUCKET
 
     def get_s3_etag(self, bucket, s3_path):
         """Looks up the ETag value for the given S3 object (the MD5 hash of the file in S3).
@@ -187,3 +190,25 @@ class PublishCmd(TsuCommand):
             m.update(data)
 
         return m.hexdigest()
+
+    def send_email(self, data, args):
+        print("Preparing to send new post email to subscriber list...")
+        emails = email_service.list_subscribers()
+
+        # Parse created at date back into a datetime object
+        data['created_at'] = datetime.datetime.strptime(data['created_at'], "%Y-%m-%d %H:%M:%S")
+
+        email_str = ''.join(['\n - '+e for e in emails])
+        resp = input(f"Sending email to {len(emails)} subscribers: {email_str} \nContinue (y/N)? ")
+        if resp not in ('Y','y'):
+            print("Skipping send")
+            return
+
+        count = 0
+        for email in emails:
+            email_service.send_email(email, data['title'], 'email/new_post.html', {'post': data})
+            count += 1
+            if count % 10 == 0:
+                print(f"Sent {count} emails of {len(emails)}")
+
+        print("Sending done!")

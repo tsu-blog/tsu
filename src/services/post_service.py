@@ -1,21 +1,28 @@
 import datetime
 import json
 import boto3
+import botocore
+from concurrent import futures
 from src.util.config import ConfigValues
 
-client = boto3.client('s3')
+client = boto3.client('s3', config=botocore.config.Config(max_pool_connections=10))
 
 def list_posts():
     """Pulls all posts in our posts bucket, no limits or paging implemented yet"""
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(ConfigValues.POSTS_BUCKET)
 
-    contents_dict_list = []
-    for post_summary in bucket.objects.all():
-        post = client.get_object(Bucket=post_summary.bucket_name, Key=post_summary.key)
-
+    def get_data(s3_client, obj):
+        post = s3_client.get_object(Bucket=obj.bucket_name, Key=obj.key)
         contents = post['Body'].read()
-        post = _load_post(contents)
+        return _load_post(contents)
+
+    with futures.ThreadPoolExecutor(5) as executor:
+        post_futures = [executor.submit(get_data, client, obj) for obj in bucket.objects.all()]
+
+    contents_dict_list = []
+    for future in futures.as_completed(post_futures):
+        post = future.result()
 
         # Only show posts in the listing if they are published
         if post.get('status', 'published') == 'published':

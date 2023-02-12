@@ -1,0 +1,12 @@
+{% extends "components/base.html" %}
+{% block title %}Subscribe{% endblock %}
+{% block content %}
+  {% if message is defined %}
+    <div class="notification is-success is-light">{{message}}</div>
+  {% endif %}
+  {% if error is defined %}
+    <div class="notification is-danger is-light">{{error}}</div>
+  {% endif %}
+  {% include "components/subscribe_form.html" ignore missing %}
+
+{% endblock %}

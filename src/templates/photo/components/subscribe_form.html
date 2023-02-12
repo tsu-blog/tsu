@@ -1,0 +1,38 @@
+<script src="https://www.google.com/recaptcha/api.js"></script>
+<script>
+  function onSubmit(token) {
+    document.getElementById("subform").submit();
+  }
+</script>
+
+<div class="content">
+  <p style="text-align: center">Never miss a new blog post! Subscribe here to get posts delivered directly to your inbox.</p>
+
+  <div class="columns is-centered">
+    <div class="column is-half">
+      <form method="POST" id="subform" action="/subscribe">
+        <div class="field has-addons">
+
+          <p class="control m-0 is-expanded has-icons-left">
+            <input class="input" type="email" name="email" value="{{email}}" placeholder="Enter your email">
+            <span class="icon is-small is-left">
+              <i class="fas fa-envelope"></i>
+            </span>
+          </p>
+
+          <div class="control">
+            <button
+              class="button is-primary g-recaptcha"
+              data-sitekey="6LeUZVoaAAAAACg2e7s74Ge5mVK0orP5k3-vCtb0"
+              data-callback='onSubmit'
+              data-action='submit'>Subscribe</button>
+          </div>
+        </div>
+        <small style="font-size: 0.7em; opacity: 0.7">This site is protected by reCAPTCHA and the Google
+          <a href="https://policies.google.com/privacy">Privacy Policy</a> and
+          <a href="https://policies.google.com/terms">Terms of Service</a> apply.
+        </small>
+      </form>
+    </div>
+  </div>
+</div>

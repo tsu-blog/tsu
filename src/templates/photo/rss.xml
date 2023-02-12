@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title><![CDATA[{{title}}]]></title>
+    <link><![CDATA[{{homepage}}]]></link>
+    <description><![CDATA[{{description}}]]></description>
+    <language>en-us</language>
+    {% for post in posts %}
+    <item>
+      <title><![CDATA[{{post['title']}}]]></title>
+      <link>{{cdn_base}}/post/{{post['id']}}</link>
+      <guid>{{cdn_base}}/post/{{post['id']}}</guid>
+      <description><![CDATA[{{post['preview']}}]]></description>
+      <content:encoded>
+        <![CDATA[
+          {{post['body']}}
+        ]]>
+      </content:encoded>
+      <category><![CDATA[{{post['category']}}]]></category>
+      <dc:creator><![CDATA[{{author}}]]></dc:creator>
+      <pubDate>{{date_format(post['created_at'])}}</pubDate>
+    </item>
+    {% endfor %}
+  </channel>
+</rss>

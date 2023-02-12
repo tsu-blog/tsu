@@ -20,3 +20,6 @@ default:
   title: My Blog
   description: My blog about my life.
   author: FirstName LastName
+  sub_confirm_bcc: notif@my.blog,notif2@my.blog
+  contact_email: hello@my.blog
+  cache_ttl: 1

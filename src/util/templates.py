@@ -22,6 +22,7 @@ def render(template, data):
         'cache_buster': ConfigValues.DEPLOYMENT_ID,
         'homepage': ConfigValues.HOMEPAGE,
         'title': ConfigValues.TITLE,
+        'domain': ConfigValues.DOMAIN,
         'description': ConfigValues.DESCRIPTION,
         'author': ConfigValues.AUTHOR
     })
