@@ -25,7 +25,7 @@ def load_config(args):
     elif 'default' in data:
         config = data['default']
     else:
-        config = data[data.keys()[0]]
+        config = data[list(data.keys())[0]]
 
     ConfigValues.APP_NAME = config['name']
     ConfigValues.CDN_BASE = config['cdn_base']
